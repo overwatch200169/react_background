@@ -1,0 +1,16 @@
+services:
+  frontend:
+    build: .
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+  backend:
+    image: your-backend-image:latest
+    environment:
+      - DATABASE_URL=${DATABASE_URL}
+    ports:
+      - "8000:8000"
+    restart: unless-stopped
