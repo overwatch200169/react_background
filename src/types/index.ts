@@ -63,6 +63,22 @@ export interface ArticleUpdate {
   tags?: string | null
 }
 
+// ─── Checki ────────────────────────────────────────────
+export interface CheckiCount {
+  name: string | null
+  cheki_count: number | null
+  id: number | null
+}
+
+export interface CheckiCreate {
+  name: string
+  cheki_count: number
+}
+
+export interface CheckiUpdate {
+  cheki_count: number
+}
+
 // ─── Auth ───────────────────────────────────────────────
 export interface Token {
   access_token: string

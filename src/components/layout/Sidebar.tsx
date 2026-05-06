@@ -9,12 +9,14 @@ import {
   X,
   ShieldCheck,
   UserCircle,
+  CheckSquare,
 } from 'lucide-react'
 
 const navItems = [
   { to: '/', label: '仪表盘', icon: LayoutDashboard },
   { to: '/users', label: '用户管理', icon: Users },
   { to: '/articles', label: '文章管理', icon: FileText },
+  { to: '/checki', label: 'Checki 管理', icon: CheckSquare },
   { to: '/profile', label: '个人信息', icon: UserCircle },
 ]
 

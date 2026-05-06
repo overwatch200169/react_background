@@ -6,6 +6,8 @@ import Dashboard from '@/pages/Dashboard'
 import Users from '@/pages/Users'
 import Articles from '@/pages/Articles'
 import ArticleEdit from '@/pages/ArticleEdit'
+import Checki from '@/pages/Checki'
+import CheckiEdit from '@/pages/CheckiEdit'
 import Profile from '@/pages/Profile'
 import type { ReactNode } from 'react'
 
@@ -53,6 +55,9 @@ function AppRoutes() {
         <Route path="articles" element={<Articles />} />
         <Route path="articles/new" element={<ArticleEdit />} />
         <Route path="articles/:id" element={<ArticleEdit />} />
+        <Route path="checki" element={<Checki />} />
+        <Route path="checki/new" element={<CheckiEdit />} />
+        <Route path="checki/:id" element={<CheckiEdit />} />
         <Route path="profile" element={<Profile />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
