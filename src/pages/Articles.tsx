@@ -10,6 +10,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Plus, Trash2, Edit, RotateCcw, Loader2, Search, ChevronLeft, ChevronRight } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import type { ArticleList } from '@/types'
+import { formatUTCToLocal } from '@/lib/utils'
 
 export default function Articles() {
   const { user } = useAuth()
@@ -122,7 +123,7 @@ export default function Articles() {
                         </Badge>
                       </TableCell>
                       <TableCell className="hidden lg:table-cell text-muted-foreground">
-                        {new Date(a.create_time).toLocaleString('zh-CN')}
+                        {formatUTCToLocal(a.create_time)}
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-1">
