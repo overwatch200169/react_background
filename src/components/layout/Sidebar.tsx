@@ -2,22 +2,22 @@ import { NavLink } from 'react-router-dom'
 import { useAuth } from '@/lib/auth'
 import { cn } from '@/lib/utils'
 import {
-  LayoutDashboard,
-  Users,
-  FileText,
-  LogOut,
-  X,
-  ShieldCheck,
-  UserCircle,
-  CheckSquare,
-} from 'lucide-react'
+  DashboardOutlined,
+  TeamOutlined,
+  FileTextOutlined,
+  LogoutOutlined,
+  CloseOutlined,
+  SafetyCertificateOutlined,
+  UserOutlined,
+  CheckSquareOutlined,
+} from '@ant-design/icons'
 
 const navItems = [
-  { to: '/', label: '仪表盘', icon: LayoutDashboard },
-  { to: '/users', label: '用户管理', icon: Users },
-  { to: '/articles', label: '文章管理', icon: FileText },
-  { to: '/checki', label: 'Checki 管理', icon: CheckSquare },
-  { to: '/profile', label: '个人信息', icon: UserCircle },
+  { to: '/', label: '仪表盘', icon: DashboardOutlined },
+  { to: '/users', label: '用户管理', icon: TeamOutlined },
+  { to: '/articles', label: '文章管理', icon: FileTextOutlined },
+  { to: '/checki', label: 'Checki 管理', icon: CheckSquareOutlined },
+  { to: '/profile', label: '个人信息', icon: UserOutlined },
 ]
 
 interface SidebarProps {
@@ -35,7 +35,6 @@ export function Sidebar({ open, onClose }: SidebarProps) {
 
   return (
     <>
-      {/* Mobile overlay */}
       {open && (
         <div className="fixed inset-0 z-40 bg-black/50 lg:hidden" onClick={onClose} />
       )}
@@ -46,41 +45,41 @@ export function Sidebar({ open, onClose }: SidebarProps) {
           open ? 'translate-x-0' : '-translate-x-full'
         )}
       >
-        {/* Header */}
         <div className="flex h-16 items-center justify-between border-b px-4">
           <div className="flex items-center gap-2">
-            <ShieldCheck className="h-6 w-6 text-primary" />
+            <SafetyCertificateOutlined style={{ fontSize: 24, color: 'var(--color-primary)' }} />
             <span className="text-lg font-bold text-sidebar-foreground">Blog Admin</span>
           </div>
           <button onClick={onClose} className="rounded-md p-1 hover:bg-sidebar-accent lg:hidden">
-            <X className="h-5 w-5" />
+            <CloseOutlined />
           </button>
         </div>
 
-        {/* Nav */}
         <nav className="flex-1 space-y-1 p-3">
-          {navItems.map((item) => (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              end={item.to === '/'}
-              onClick={onClose}
-              className={({ isActive }) =>
-                cn(
-                  'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors',
-                  isActive
-                    ? 'bg-sidebar-accent text-sidebar-accent-foreground'
-                    : 'text-sidebar-foreground hover:bg-sidebar-accent/60'
-                )
-              }
-            >
-              <item.icon className="h-5 w-5" />
-              {item.label}
-            </NavLink>
-          ))}
+          {navItems.map((item) => {
+            const IconComp = item.icon
+            return (
+              <NavLink
+                key={item.to}
+                to={item.to}
+                end={item.to === '/'}
+                onClick={onClose}
+                className={({ isActive }) =>
+                  cn(
+                    'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors',
+                    isActive
+                      ? 'bg-sidebar-accent text-sidebar-accent-foreground'
+                      : 'text-sidebar-foreground hover:bg-sidebar-accent/60'
+                  )
+                }
+              >
+                <IconComp style={{ fontSize: 20 }} />
+                {item.label}
+              </NavLink>
+            )
+          })}
         </nav>
 
-        {/* Footer */}
         <div className="border-t p-3">
           <div className="mb-2 px-3 py-1.5 text-sm text-muted-foreground truncate">
             {user ? user.username : ''}
@@ -89,7 +88,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
             onClick={handleLogout}
             className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-destructive hover:bg-destructive/10 transition-colors"
           >
-            <LogOut className="h-5 w-5" />
+            <LogoutOutlined style={{ fontSize: 20 }} />
             退出登录
           </button>
         </div>

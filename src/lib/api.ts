@@ -16,29 +16,35 @@ function getAccessToken(): string | null {
   return localStorage.getItem('access_token')
 }
 
-// Fetch CSRF token from GET /
+// Fetch CSRF token from backend GET /
+// Backend sets csrf_token cookie on this endpoint
 export async function fetchCsrfToken(): Promise<string | null> {
   try {
-    const res = await axios.get('/', { withCredentials: true })
-    let token: string | null = null
+    const res = await axios.get('/', {
+      withCredentials: true,
+      headers: { Accept: 'application/json' },
+    })
+    // 1. Try response body
     if (res.data?.csrf_token) {
-      token = res.data.csrf_token
+      csrfToken = res.data.csrf_token
+      return csrfToken
     }
-    if (!token) {
-      const setCookie = res.headers['set-cookie']
-      if (setCookie) {
-        const match = setCookie.find((c: string) => c.startsWith('csrf_token='))
-        if (match) {
-          token = match.split('=')[1]?.split(';')[0] ?? null
-        }
+    // 2. Try Set-Cookie header (only available in non-cross-origin or same-site)
+    const setCookie = res.headers['set-cookie'] as string[] | undefined
+    if (setCookie) {
+      const match = setCookie.find((c: string) => c.startsWith('csrf_token='))
+      if (match) {
+        csrfToken = match.split('=')[1]?.split(';')[0] ?? null
+        return csrfToken
       }
     }
-    if (!token) {
-      const match = document.cookie.match(/csrf_token=([^;]+)/)
-      token = match ? match[1] : null
+    // 3. Try document.cookie (won't work for HttpOnly cookies)
+    const cookieMatch = document.cookie.match(/csrf_token=([^;]+)/)
+    if (cookieMatch) {
+      csrfToken = cookieMatch[1]
+      return csrfToken
     }
-    csrfToken = token
-    return token
+    return null
   } catch {
     return null
   }

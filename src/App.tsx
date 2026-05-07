@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { Spin, ConfigProvider } from 'antd'
 import { AuthProvider, useAuth } from '@/lib/auth'
 import { AppLayout } from '@/components/layout/AppLayout'
 import Login from '@/pages/Login'
@@ -15,8 +16,8 @@ function ProtectedRoute({ children }: { children: ReactNode }) {
   const { user, loading } = useAuth()
   if (loading) {
     return (
-      <div className="flex h-screen items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+      <div style={{ display: 'flex', height: '100vh', alignItems: 'center', justifyContent: 'center' }}>
+        <Spin size="large" />
       </div>
     )
   }
@@ -68,9 +69,18 @@ function AppRoutes() {
 export default function App() {
   return (
     <BrowserRouter>
-      <AuthProvider>
-        <AppRoutes />
-      </AuthProvider>
+      <ConfigProvider
+        theme={{
+          token: {
+            colorPrimary: '#006B5E',
+            borderRadius: 6,
+          },
+        }}
+      >
+        <AuthProvider>
+          <AppRoutes />
+        </AuthProvider>
+      </ConfigProvider>
     </BrowserRouter>
   )
 }

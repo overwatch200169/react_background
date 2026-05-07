@@ -1,13 +1,12 @@
-import { useEffect, useState, type FormEvent } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import api from '@/lib/api'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
-import { ArrowLeft, Loader2 } from 'lucide-react'
+import { Button, Input, Card, Typography, Space, message, Spin } from 'antd'
+import { ArrowLeftOutlined } from '@ant-design/icons'
 import type { ArticlePublic, ArticleCreate } from '@/types'
 import MDEditor from '@uiw/react-md-editor'
+
+const { Title, Text } = Typography
 
 export default function ArticleEdit() {
   const { id } = useParams()
@@ -17,7 +16,6 @@ export default function ArticleEdit() {
   const [form, setForm] = useState<ArticleCreate>({ title: '', body: '', tags: '' })
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
-  const [error, setError] = useState('')
 
   useEffect(() => {
     if (!isNew) {
@@ -30,14 +28,16 @@ export default function ArticleEdit() {
             tags: r.data.tags ?? '',
           })
         })
-        .catch(() => setError('文章加载失败'))
+        .catch(() => message.error('文章加载失败'))
         .finally(() => setLoading(false))
     }
   }, [id, isNew])
 
-  const handleSubmit = async (e: FormEvent) => {
-    e.preventDefault()
-    setError('')
+  const handleSubmit = async () => {
+    if (!form.title || !form.body) {
+      message.warning('请填写标题和内容')
+      return
+    }
     setSaving(true)
     try {
       if (isNew) {
@@ -48,78 +48,65 @@ export default function ArticleEdit() {
       navigate('/articles')
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : '保存失败'
-      setError(msg)
+      message.error(msg)
     } finally {
       setSaving(false)
     }
   }
 
   if (loading) {
-    return <div className="flex justify-center py-20"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>
+    return <div style={{ display: 'flex', justifyContent: 'center', padding: 80 }}><Spin size="large" /></div>
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" onClick={() => navigate('/articles')}>
-          <ArrowLeft className="h-5 w-5" />
-        </Button>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+        <Button type="text" icon={<ArrowLeftOutlined />} onClick={() => navigate('/articles')} />
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">{isNew ? '新建文章' : '编辑文章'}</h1>
-          <p className="text-muted-foreground">{isNew ? '创建一篇新的博客文章' : '修改文章内容'}</p>
+          <Title level={3} style={{ marginBottom: 0 }}>{isNew ? '新建文章' : '编辑文章'}</Title>
+          <Text type="secondary">{isNew ? '创建一篇新的博客文章' : '修改文章内容'}</Text>
         </div>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>{isNew ? '创建文章' : '编辑内容'}</CardTitle>
-          <CardDescription>请填写文章的标题、内容和标签</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="grid gap-2">
-              <Label htmlFor="title">标题</Label>
-              <Input
-                id="title"
-                placeholder="请输入文章标题"
-                value={form.title}
-                onChange={(e) => setForm({ ...form, title: e.target.value })}
-                required
-              />
-            </div>
+      <Card
+        title={isNew ? '创建文章' : '编辑内容'}
+      >
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+          <div>
+            <Text strong style={{ display: 'block', marginBottom: 6 }}>标题</Text>
+            <Input
+              placeholder="请输入文章标题"
+              value={form.title}
+              onChange={(e) => setForm({ ...form, title: e.target.value })}
+            />
+          </div>
 
-            <div className="grid gap-2">
-              <Label htmlFor="tags">标签</Label>
-              <Input
-                id="tags"
-                placeholder="多个标签用逗号分隔，如: 技术,前端,React"
-                value={form.tags}
-                onChange={(e) => setForm({ ...form, tags: e.target.value })}
-                required
-              />
-            </div>
+          <div>
+            <Text strong style={{ display: 'block', marginBottom: 6 }}>标签</Text>
+            <Input
+              placeholder="多个标签用逗号分隔，如: 技术,前端,React"
+              value={form.tags}
+              onChange={(e) => setForm({ ...form, tags: e.target.value })}
+            />
+          </div>
 
-            <div className="grid gap-2" data-color-mode="light">
-              <Label htmlFor="body">正文内容（Markdown）</Label>
-              <MDEditor
-                value={form.body}
-                onChange={(val) => setForm({ ...form, body: val ?? '' })}
-                height={400}
-                preview="live"
-              />
-            </div>
+          <div data-color-mode="light">
+            <Text strong style={{ display: 'block', marginBottom: 6 }}>正文内容（Markdown）</Text>
+            <MDEditor
+              value={form.body}
+              onChange={(val) => setForm({ ...form, body: val ?? '' })}
+              height={400}
+              preview="live"
+            />
+          </div>
 
-            {error && <p className="text-sm text-destructive">{error}</p>}
-
-            <div className="flex gap-3">
-              <Button type="button" variant="outline" onClick={() => navigate('/articles')}>取消</Button>
-              <Button type="submit" disabled={saving}>
-                {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                {isNew ? '发布' : '保存'}
-              </Button>
-            </div>
-          </form>
-        </CardContent>
+          <Space>
+            <Button onClick={() => navigate('/articles')}>取消</Button>
+            <Button type="primary" onClick={handleSubmit} loading={saving} style={{ background: '#006B5E' }}>
+              {isNew ? '发布' : '保存'}
+            </Button>
+          </Space>
+        </div>
       </Card>
     </div>
   )

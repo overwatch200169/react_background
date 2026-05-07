@@ -1,8 +1,8 @@
 import { Outlet } from 'react-router-dom'
 import { useState } from 'react'
 import { Sidebar } from './Sidebar'
-import { Menu } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { MenuOutlined } from '@ant-design/icons'
+import { Button } from 'antd'
 
 export function AppLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -11,22 +11,21 @@ export function AppLayout() {
     <div className="flex h-screen bg-background">
       <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
-      <div className="flex flex-1 flex-col overflow-hidden">
-        {/* Top bar (mobile) */}
-        <header className="flex h-16 items-center gap-4 border-b px-4 lg:px-6">
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+        <header style={{
+          display: 'flex', alignItems: 'center', gap: 16,
+          height: 64, borderBottom: '1px solid var(--color-border)', padding: '0 16px',
+        }}>
           <Button
-            variant="ghost"
-            size="icon"
+            type="text"
+            icon={<MenuOutlined />}
             className="lg:hidden"
             onClick={() => setSidebarOpen(true)}
-          >
-            <Menu className="h-5 w-5" />
-          </Button>
-          <div className="text-lg font-semibold hidden sm:block">博客管理后台</div>
+          />
+          <div style={{ fontSize: 18, fontWeight: 600 }} className="hidden sm:block">博客管理后台</div>
         </header>
 
-        {/* Main content */}
-        <main className="flex-1 overflow-y-auto p-4 lg:p-6">
+        <main style={{ flex: 1, overflowY: 'auto', padding: '16px 24px' }}>
           <Outlet />
         </main>
       </div>

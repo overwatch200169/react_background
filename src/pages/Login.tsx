@@ -1,33 +1,28 @@
-import { useState, type FormEvent } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useState } from 'react'
+import { Form, Input, Button, Card, Typography, message, Spin } from 'antd'
+import { SafetyCertificateOutlined } from '@ant-design/icons'
 import axios from 'axios'
+import { useNavigate } from 'react-router-dom'
 import { useAuth } from '@/lib/auth'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { ShieldCheck, Loader2 } from 'lucide-react'
+
+const { Title, Text } = Typography
 
 export default function Login() {
-  const [username, setUsername] = useState('')
-  const [password, setPassword] = useState('')
-  const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [form] = Form.useForm()
   const { login } = useAuth()
   const navigate = useNavigate()
 
-  const handleSubmit = async (e: FormEvent) => {
-    e.preventDefault()
-    setError('')
+  const handleSubmit = async (values: { username: string; password: string }) => {
     setLoading(true)
     try {
-      await login(username, password)
+      await login(values.username, values.password)
       navigate('/')
     } catch (err: unknown) {
       if (axios.isAxiosError(err) && err.response?.status === 401) {
-        setError('用户名或密码错误')
+        message.error('用户名或密码错误')
       } else {
-        setError('登录失败，请检查网络连接')
+        message.error('登录失败，请检查网络连接')
       }
     } finally {
       setLoading(false)
@@ -35,46 +30,43 @@ export default function Login() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 px-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
-          <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
-            <ShieldCheck className="h-7 w-7 text-primary" />
+    <div style={{
+      minHeight: '100vh',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      background: 'linear-gradient(135deg, #f0fdfb 0%, #ccfbf1 100%)',
+      padding: '1rem',
+    }}>
+      <Card style={{ width: '100%', maxWidth: 420 }}>
+        <div style={{ textAlign: 'center', marginBottom: 24 }}>
+          <div style={{
+            margin: '0 auto 12px',
+            width: 48, height: 48,
+            borderRadius: '50%',
+            background: 'rgba(0,107,94,0.1)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}>
+            <SafetyCertificateOutlined style={{ fontSize: 28, color: '#006B5E' }} />
           </div>
-          <CardTitle className="text-2xl">博客管理后台</CardTitle>
-          <CardDescription>请输入账号密码登录</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="username">用户名</Label>
-              <Input
-                id="username"
-                type="text"
-                placeholder="请输入用户名"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="password">密码</Label>
-              <Input
-                id="password"
-                type="password"
-                placeholder="请输入密码"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
-            </div>
-            {error && <p className="text-sm text-destructive">{error}</p>}
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading && <Loader2 className="h-4 w-4 animate-spin" />}
-              登录
-            </Button>
-          </form>
-        </CardContent>
+          <Title level={3} style={{ marginBottom: 4 }}>博客管理后台</Title>
+          <Text type="secondary">请输入账号密码登录</Text>
+        </div>
+        <Spin spinning={loading}>
+          <Form form={form} layout="vertical" onFinish={handleSubmit} >
+            <Form.Item label="用户名" name="username" rules={[{ required: true, message: '请输入用户名' }]}>
+              <Input placeholder="请输入用户名" />
+            </Form.Item>
+            <Form.Item label="密码" name="password" rules={[{ required: true, message: '请输入密码' }]}>
+              <Input.Password placeholder="请输入密码" />
+            </Form.Item>
+            <Form.Item style={{ marginBottom: 0 }}>
+              <Button type="primary" htmlType="submit" block loading={loading} style={{ background: '#006B5E' }}>
+                登录
+              </Button>
+            </Form.Item>
+          </Form>
+        </Spin>
       </Card>
     </div>
   )

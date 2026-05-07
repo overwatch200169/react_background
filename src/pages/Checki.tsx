@@ -1,23 +1,14 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import api from '@/lib/api'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { Badge } from '@/components/ui/badge'
-import { Plus, Edit, Loader2, Trash2 } from 'lucide-react'
-import {
-  AlertDialog, AlertDialogAction, AlertDialogCancel,
-  AlertDialogContent, AlertDialogDescription, AlertDialogFooter,
-  AlertDialogHeader, AlertDialogTitle,
-} from '@/components/ui/alert-dialog'
+import { Button, Card, Table, Tag, Space, Popconfirm, Spin } from 'antd'
+import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons'
 import type { CheckiCount } from '@/types'
 
 export default function Checki() {
   const navigate = useNavigate()
   const [items, setItems] = useState<CheckiCount[]>([])
   const [loading, setLoading] = useState(true)
-  const [deleteId, setDeleteId] = useState<number | null>(null)
 
   const fetchItems = async () => {
     setLoading(true)
@@ -31,98 +22,62 @@ export default function Checki() {
 
   useEffect(() => { fetchItems() }, [])
 
-  const handleDelete = async () => {
-    if (!deleteId) return
+  const handleDelete = async (id: number | null) => {
+    if (!id) return
     try {
-      await api.patch('/api/v1/egg/checki', { cheki_count: 0 }, { params: { id: deleteId } })
-      setDeleteId(null)
+      await api.patch('/api/v1/egg/checki', { cheki_count: 0 }, { params: { id } })
       fetchItems()
     } catch { /* ignore */ }
   }
 
+  const columns = [
+    { title: 'ID', dataIndex: 'id', width: 70, render: (v: number | null) => <span style={{ fontFamily: 'monospace' }}>{v}</span> },
+    { title: '名称', dataIndex: 'name', render: (v: string | null) => v ?? '-' },
+    {
+      title: '次数', dataIndex: 'cheki_count', width: 100, align: 'center' as const,
+      render: (v: number | null) => <Tag>{v ?? 0}</Tag>,
+    },
+    {
+      title: '操作', width: 120, align: 'right' as const,
+      render: (_: any, record: CheckiCount) => (
+        <Space size={4}>
+          <Button
+            type="text"
+            size="small"
+            icon={<EditOutlined />}
+            onClick={() => record.id && navigate(`/checki/${record.id}`)}
+          />
+          <Popconfirm title="确定要删除该项目吗？" onConfirm={() => handleDelete(record.id)} okText="删除" cancelText="取消" okButtonProps={{ danger: true }}>
+            <Button type="text" size="small" danger icon={<DeleteOutlined />} />
+          </Popconfirm>
+        </Space>
+      ),
+    },
+  ]
+
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16 }}>
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Checki 管理</h1>
-          <p className="text-muted-foreground">管理 Checki 打卡项目</p>
+          <h1 style={{ fontSize: 24, fontWeight: 700 }}>Checki 管理</h1>
+          <p style={{ color: '#71717a' }}>管理 Checki 打卡项目</p>
         </div>
-        <Button onClick={() => navigate('/checki/new')}>
-          <Plus className="mr-2 h-4 w-4" />
+        <Button type="primary" icon={<PlusOutlined />} onClick={() => navigate('/checki/new')} style={{ background: '#006B5E' }}>
           新建项目
         </Button>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>项目列表</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {loading ? (
-            <div className="flex justify-center py-8"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>ID</TableHead>
-                  <TableHead>名称</TableHead>
-                  <TableHead className="text-center">次数</TableHead>
-                  <TableHead className="text-right">操作</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {items.length === 0 && (
-                  <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground">暂无项目</TableCell></TableRow>
-                )}
-                {items.map((item) => (
-                  <TableRow key={item.id}>
-                    <TableCell className="font-mono">{item.id}</TableCell>
-                    <TableCell className="font-medium">{item.name ?? '-'}</TableCell>
-                    <TableCell className="text-center">
-                      <Badge variant="secondary">{item.cheki_count ?? 0}</Badge>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-1">
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          className="h-8 w-8"
-                          onClick={() => item.id && navigate(`/checki/${item.id}`)}
-                          title="编辑"
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="destructive"
-                          size="icon"
-                          className="h-8 w-8"
-                          onClick={() => setDeleteId(item.id)}
-                          title="删除"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
+      <Card title="项目列表">
+        <Spin spinning={loading}>
+          <Table
+            dataSource={items}
+            columns={columns}
+            rowKey="id"
+            pagination={false}
+            locale={{ emptyText: '暂无项目' }}
+          />
+        </Spin>
       </Card>
-
-      <AlertDialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>确认删除</AlertDialogTitle>
-            <AlertDialogDescription>确定要删除该项目吗？此操作不可撤销。</AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>取消</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">删除</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
   )
 }

@@ -1,13 +1,10 @@
 import { useEffect, useState } from 'react'
 import { useAuth } from '@/lib/auth'
 import api from '@/lib/api'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
-import { Separator } from '@/components/ui/separator'
-import { Loader2 } from 'lucide-react'
+import { Button, Input, Card, Typography, Spin, message, Space } from 'antd'
 import type { UserProfilePublic, UserUpdate, UserProfileUpdate } from '@/types'
+
+const { Title, Text } = Typography
 
 export default function Profile() {
   const { user, refreshUser } = useAuth()
@@ -16,19 +13,15 @@ export default function Profile() {
   const [profile, setProfile] = useState<UserProfilePublic | null>(null)
   const [loading, setLoading] = useState(true)
 
-  // User info form
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [userSaving, setUserSaving] = useState(false)
-  const [userMsg, setUserMsg] = useState('')
 
-  // Profile form
   const [bio, setBio] = useState('')
   const [birthday, setBirthday] = useState('')
   const [age, setAge] = useState('')
   const [avatarUrl, setAvatarUrl] = useState('')
   const [profileSaving, setProfileSaving] = useState(false)
-  const [profileMsg, setProfileMsg] = useState('')
 
   useEffect(() => {
     if (!userId) return
@@ -46,9 +39,7 @@ export default function Profile() {
     setEmail(user?.email ?? '')
   }, [userId, user])
 
-  const handleUpdateUser = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setUserMsg('')
+  const handleUpdateUser = async () => {
     if (!userId) return
     setUserSaving(true)
     try {
@@ -57,17 +48,15 @@ export default function Profile() {
       await api.patch(`/api/v1/users/${userId}`, body)
       setPassword('')
       await refreshUser()
-      setUserMsg('保存成功')
+      message.success('保存成功')
     } catch {
-      setUserMsg('保存失败')
+      message.error('保存失败')
     } finally {
       setUserSaving(false)
     }
   }
 
-  const handleUpdateProfile = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setProfileMsg('')
+  const handleUpdateProfile = async () => {
     if (!userId) return
     setProfileSaving(true)
     try {
@@ -78,141 +67,119 @@ export default function Profile() {
         avatar_url: avatarUrl || null,
       }
       await api.patch(`/api/v1/users/${userId}/profile`, body)
-      setProfileMsg('保存成功')
+      message.success('保存成功')
     } catch {
-      setProfileMsg('保存失败')
+      message.error('保存失败')
     } finally {
       setProfileSaving(false)
     }
   }
 
   if (loading) {
-    return <div className="flex justify-center py-20"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>
+    return <div style={{ display: 'flex', justifyContent: 'center', padding: 80 }}><Spin size="large" /></div>
   }
 
   return (
-    <div className="space-y-6 max-w-2xl">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 24, maxWidth: 640 }}>
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">个人信息</h1>
-        <p className="text-muted-foreground">管理你的账号与资料</p>
+        <Title level={3} style={{ marginBottom: 0 }}>个人信息</Title>
+        <Text type="secondary">管理你的账号与资料</Text>
       </div>
 
-      {/* Avatar */}
       <Card>
-        <CardContent className="flex items-center gap-4 pt-6">
+        <div style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '8px 0' }}>
           {profile?.avatar_url ? (
-            <img src={profile.avatar_url} alt="头像" className="h-16 w-16 rounded-full object-cover border" />
+            <img src={profile.avatar_url} alt="头像" style={{ width: 64, height: 64, borderRadius: '50%', objectFit: 'cover', border: '1px solid #e4e4e7' }} />
           ) : (
-            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 text-primary text-xl font-bold">
+            <div style={{
+              width: 64, height: 64, borderRadius: '50%',
+              background: 'rgba(0,107,94,0.1)', color: '#006B5E',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: 24, fontWeight: 'bold',
+            }}>
               {user?.username?.charAt(0).toUpperCase()}
             </div>
           )}
           <div>
-            <p className="text-lg font-semibold">{user?.username}</p>
-            <p className="text-sm text-muted-foreground">ID: {user?.user_id} / 等级: {user?.level}</p>
+            <p style={{ fontSize: 18, fontWeight: 600, margin: 0 }}>{user?.username}</p>
+            <Text type="secondary">ID: {user?.user_id} / 等级: {user?.level}</Text>
           </div>
-        </CardContent>
+        </div>
       </Card>
 
-      {/* Update User Info */}
-      <Card>
-        <CardHeader>
-          <CardTitle>账号信息</CardTitle>
-          <CardDescription>修改邮箱和密码</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleUpdateUser} className="space-y-4">
-            <div className="grid gap-2">
-              <Label htmlFor="username">用户名</Label>
-              <Input id="username" value={user?.username ?? ''} disabled />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="email">邮箱</Label>
-              <Input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="password">新密码</Label>
-              <Input
-                id="password"
-                type="password"
-                placeholder="留空则不修改"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
-            </div>
-            <div className="flex items-center gap-3">
-              <Button type="submit" disabled={userSaving}>
-                {userSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                保存
-              </Button>
-              {userMsg && <span className={`text-sm ${userMsg === '保存成功' ? 'text-emerald-600' : 'text-destructive'}`}>{userMsg}</span>}
-            </div>
-          </form>
-        </CardContent>
+      <Card title="账号信息" extra={<Text type="secondary">修改邮箱和密码</Text>}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <div>
+            <Text strong style={{ display: 'block', marginBottom: 6 }}>用户名</Text>
+            <Input value={user?.username ?? ''} disabled />
+          </div>
+          <div>
+            <Text strong style={{ display: 'block', marginBottom: 6 }}>邮箱</Text>
+            <Input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+            />
+          </div>
+          <div>
+            <Text strong style={{ display: 'block', marginBottom: 6 }}>新密码</Text>
+            <Input.Password
+              placeholder="留空则不修改"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+          </div>
+          <Space>
+            <Button type="primary" onClick={handleUpdateUser} loading={userSaving} style={{ background: '#006B5E' }}>
+              保存
+            </Button>
+          </Space>
+        </div>
       </Card>
 
-      {/* Update User Profile */}
-      <Card>
-        <CardHeader>
-          <CardTitle>个人资料</CardTitle>
-          <CardDescription>修改简介、生日等信息</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleUpdateProfile} className="space-y-4">
-            <div className="grid gap-2">
-              <Label htmlFor="bio">个人简介</Label>
+      <Card title="个人资料" extra={<Text type="secondary">修改简介、生日等信息</Text>}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <div>
+            <Text strong style={{ display: 'block', marginBottom: 6 }}>个人简介</Text>
+            <Input
+              placeholder="介绍一下自己..."
+              value={bio}
+              onChange={(e) => setBio(e.target.value)}
+            />
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+            <div>
+              <Text strong style={{ display: 'block', marginBottom: 6 }}>生日</Text>
               <Input
-                id="bio"
-                placeholder="介绍一下自己..."
-                value={bio}
-                onChange={(e) => setBio(e.target.value)}
+                type="date"
+                value={birthday}
+                onChange={(e) => setBirthday(e.target.value)}
               />
             </div>
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <div className="grid gap-2">
-                <Label htmlFor="birthday">生日</Label>
-                <Input
-                  id="birthday"
-                  type="date"
-                  value={birthday}
-                  onChange={(e) => setBirthday(e.target.value)}
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="age">年龄</Label>
-                <Input
-                  id="age"
-                  type="number"
-                  placeholder="年龄"
-                  value={age}
-                  onChange={(e) => setAge(e.target.value)}
-                />
-              </div>
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="avatarUrl">头像链接</Label>
+            <div>
+              <Text strong style={{ display: 'block', marginBottom: 6 }}>年龄</Text>
               <Input
-                id="avatarUrl"
-                placeholder="输入头像图片 URL"
-                value={avatarUrl}
-                onChange={(e) => setAvatarUrl(e.target.value)}
+                type="number"
+                placeholder="年龄"
+                value={age}
+                onChange={(e) => setAge(e.target.value)}
               />
             </div>
-            <div className="flex items-center gap-3">
-              <Button type="submit" disabled={profileSaving}>
-                {profileSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                保存
-              </Button>
-              {profileMsg && <span className={`text-sm ${profileMsg === '保存成功' ? 'text-emerald-600' : 'text-destructive'}`}>{profileMsg}</span>}
-            </div>
-          </form>
-        </CardContent>
+          </div>
+          <div>
+            <Text strong style={{ display: 'block', marginBottom: 6 }}>头像链接</Text>
+            <Input
+              placeholder="输入头像图片 URL"
+              value={avatarUrl}
+              onChange={(e) => setAvatarUrl(e.target.value)}
+            />
+          </div>
+          <Space>
+            <Button type="primary" onClick={handleUpdateProfile} loading={profileSaving} style={{ background: '#006B5E' }}>
+              保存
+            </Button>
+          </Space>
+        </div>
       </Card>
     </div>
   )
