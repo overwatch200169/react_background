@@ -70,7 +70,7 @@ export default function Articles() {
     {
       title: '标签', dataIndex: 'tags', responsive: ['md'] as any,
       render: (v: string | null) => v?.split(',').slice(0, 3).map((tag, i) => (
-        <Tag key={i} style={{ background: '#e2fbf7', borderColor: '#e2fbf7', color: '#002020', marginRight: 4 }}>{tag.trim()}</Tag>
+        <Tag key={i} style={{ background: 'var(--tag-bg)', borderColor: 'var(--tag-border)', color: 'var(--tag-color)', marginRight: 4 }}>{tag.trim()}</Tag>
       )),
     },
     {

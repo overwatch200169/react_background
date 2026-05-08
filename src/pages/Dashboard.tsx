@@ -19,7 +19,7 @@ export default function Dashboard() {
     <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
       <div>
         <h1 style={{ fontSize: 24, fontWeight: 700 }}>仪表盘</h1>
-        <p style={{ color: '#71717a' }}>欢迎回来，{user?.username}</p>
+        <p style={{ color: 'var(--text-secondary)' }}>欢迎回来，{user?.username}</p>
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 16 }}>
@@ -34,7 +34,7 @@ export default function Dashboard() {
           <Statistic
             title="文章总数"
             value={articleCount}
-            prefix={<FileTextOutlined style={{ color: '#006B5E' }} />}
+            prefix={<FileTextOutlined style={{ color: 'var(--color-primary)' }} />}
           />
         </Card>
         <Card>

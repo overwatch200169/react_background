@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { useBlocker, useNavigate, useParams } from 'react-router-dom'
 import api from '@/lib/api'
 import { compressImage } from '@/lib/image-compress'
+import { useTheme } from '@/lib/theme'
 import { Button, Input, Card, Typography, Space, message, Spin, Modal, Tag } from 'antd'
 import { ArrowLeftOutlined, ExclamationCircleOutlined, CheckCircleOutlined } from '@ant-design/icons'
 import type { ArticlePublic, ArticleCreate } from '@/types'
@@ -36,6 +37,7 @@ export default function ArticleEdit() {
   const navigate = useNavigate()
   const isNew = !id
 
+  const { resolvedTheme } = useTheme()
   const [form, setForm] = useState({ title: '', body: '', tags: [] as string[] })
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -54,14 +56,51 @@ export default function ArticleEdit() {
       cherryInstance.current.setValue(form.body)
       return
     }
+    const isMobile = window.innerWidth < 768
     cherryInstance.current = new Cherry({
       el: editorRef.current,
       value: form.body,
       editor: {
-        defaultModel: 'edit&preview',
+        defaultModel: isMobile ? 'editOnly' : 'edit&preview',
         height: '400px',
       },
+      themeSettings: {
+        themeList: [
+          { className: 'default', label: '默认' },
+          { className: 'dark', label: '黑' },
+          { className: 'light', label: '白' },
+        ],
+        mainTheme: resolvedTheme === 'dark' ? 'dark' : 'light',
+        codeBlockTheme: resolvedTheme === 'dark' ? 'vs2015' : 'default',
+      },
       locale: 'zh_CN',
+      ...(isMobile
+        ? {
+            toolbars: {
+              toolbar: [
+                'switchModel',
+                '|',
+                'bold',
+                'italic',
+                'strikethrough',
+                '|',
+                'list',
+                {
+                  insert: [
+                    'image',
+                    'link',
+                    'hr',
+                    'br',
+                    'code',
+                    'formula',
+                    'toc',
+                    'table',
+                  ],
+                },
+              ],
+            },
+          }
+        : {}),
       fileUpload: (file: File, callback: (url: string) => void) => {
         compressImage(file)
           .then((compressed) => {
@@ -79,8 +118,22 @@ export default function ArticleEdit() {
           setForm((prev) => ({ ...prev, body: markdownText }))
         },
       },
-    })
+    } as any)
+
+    const handleResize = () => {
+      if (!cherryInstance.current) return
+      const isMobile = window.innerWidth < 768
+      const cherry = cherryInstance.current as any
+      if (isMobile) {
+        cherry.switchModel('editOnly')
+      } else {
+        cherry.switchModel('edit&preview')
+      }
+    }
+    window.addEventListener('resize', handleResize)
+
     return () => {
+      window.removeEventListener('resize', handleResize)
       if (cherryInstance.current) {
         cherryInstance.current.destroy()
         cherryInstance.current = null
@@ -88,6 +141,13 @@ export default function ArticleEdit() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loading])
+
+  // 主题变化时同步 Cherry Markdown 主题
+  useEffect(() => {
+    if (!cherryInstance.current) return
+    const cherry = cherryInstance.current as any
+    cherry.setTheme(resolvedTheme === 'dark' ? 'dark' : 'light')
+  }, [resolvedTheme])
 
   useEffect(() => {
     if (!isNew) {
@@ -278,7 +338,7 @@ export default function ArticleEdit() {
                     e.preventDefault()
                     setForm({ ...form, tags: form.tags.filter((t) => t !== tag) })
                   }}
-                  style={{ margin: 0, userSelect: 'none', background: '#e2fbf7', borderColor: '#e2fbf7', color: '#002020' }}
+                  style={{ margin: 0, userSelect: 'none', background: 'var(--tag-bg)', borderColor: 'var(--tag-border)', color: 'var(--tag-color)' }}
                 >
                   {tag}
                 </Tag>

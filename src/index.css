@@ -31,6 +31,104 @@
   --color-sidebar-accent-foreground: #002020;
 }
 
+/* ── 暗色主题变量 ── */
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+  }
+  :root:not(.light) {
+    --color-background: #060e0c;
+    --color-foreground: #e8f5f0;
+    --color-card: #0b1a16;
+    --color-card-foreground: #e8f5f0;
+    --color-popover: #0b1a16;
+    --color-popover-foreground: #e8f5f0;
+    --color-primary: #00c9a7;
+    --color-primary-foreground: #002020;
+    --color-secondary: #143d34;
+    --color-secondary-foreground: #c2e8e0;
+    --color-muted: #122a24;
+    --color-muted-foreground: #8fa8a1;
+    --color-accent: #164039;
+    --color-accent-foreground: #9ef2e4;
+    --color-destructive: #ef4444;
+    --color-destructive-foreground: #ffffff;
+    --color-border: #1a3d34;
+    --color-input: #1a3d34;
+    --color-ring: #00c9a7;
+    --color-sidebar: #071210;
+    --color-sidebar-foreground: #c2e8e0;
+    --color-sidebar-border: #143d34;
+    --color-sidebar-accent: #1a4a3f;
+    --color-sidebar-accent-foreground: #9ef2e4;
+    /* 语义化别名 */
+    --text-secondary: #7ba89d;
+    --border-default: #1a3d34;
+    --tag-bg: #143d34;
+    --tag-color: #9ef2e4;
+    --tag-border: #1a5046;
+    --input-border: #1a3d34;
+    --upload-bg: #0b1a16;
+    --upload-border: #1a3d34;
+    --upload-icon: #5a8a7e;
+  }
+}
+
+/* PC 端手动切换：.dark 覆盖 */
+html.dark {
+  color-scheme: dark;
+}
+
+html.dark {
+  --color-background: #060e0c;
+  --color-foreground: #e8f5f0;
+  --color-card: #0b1a16;
+  --color-card-foreground: #e8f5f0;
+  --color-popover: #0b1a16;
+  --color-popover-foreground: #e8f5f0;
+  --color-primary: #00c9a7;
+  --color-primary-foreground: #002020;
+  --color-secondary: #143d34;
+  --color-secondary-foreground: #c2e8e0;
+  --color-muted: #122a24;
+  --color-muted-foreground: #8fa8a1;
+  --color-accent: #164039;
+  --color-accent-foreground: #9ef2e4;
+  --color-destructive: #ef4444;
+  --color-destructive-foreground: #ffffff;
+  --color-border: #1a3d34;
+  --color-input: #1a3d34;
+  --color-ring: #00c9a7;
+  --color-sidebar: #071210;
+  --color-sidebar-foreground: #c2e8e0;
+  --color-sidebar-border: #143d34;
+  --color-sidebar-accent: #1a4a3f;
+  --color-sidebar-accent-foreground: #9ef2e4;
+  /* 语义化别名 */
+  --text-secondary: #7ba89d;
+  --border-default: #1a3d34;
+  --tag-bg: #143d34;
+  --tag-color: #9ef2e4;
+  --tag-border: #1a5046;
+  --input-border: #1a3d34;
+  --upload-bg: #0b1a16;
+  --upload-border: #1a3d34;
+  --upload-icon: #5a8a7e;
+}
+
+/* 语义化别名（方便内联样式引用） */
+:root {
+  --text-secondary: #71717a;
+  --border-default: #e4e4e7;
+  --tag-bg: #e2fbf7;
+  --tag-color: #002020;
+  --tag-border: #e2fbf7;
+  --input-border: #d9d9d9;
+  --upload-bg: #fafafa;
+  --upload-border: #d9d9d9;
+  --upload-icon: #bfbfbf;
+}
+
 @layer base {
   *,
   ::after,
@@ -40,5 +138,6 @@
   body {
     @apply bg-background text-foreground antialiased;
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    transition: background-color 0.3s, color 0.3s;
   }
 }

@@ -60,9 +60,9 @@ export default function Checki() {
       <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16 }}>
         <div>
           <h1 style={{ fontSize: 24, fontWeight: 700 }}>Checki 管理</h1>
-          <p style={{ color: '#71717a' }}>管理 Checki 打卡项目</p>
+          <p style={{ color: 'var(--text-secondary)' }}>管理 Checki 打卡项目</p>
         </div>
-        <Button type="primary" icon={<PlusOutlined />} onClick={() => navigate('/checki/new')} style={{ background: '#006B5E' }}>
+        <Button type="primary" icon={<PlusOutlined />} onClick={() => navigate('/checki/new')}>
           新建项目
         </Button>
       </div>

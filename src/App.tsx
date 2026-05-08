@@ -1,6 +1,7 @@
 import { Outlet, Navigate, createBrowserRouter, RouterProvider } from 'react-router-dom'
-import { Spin, ConfigProvider } from 'antd'
+import { Spin, ConfigProvider, theme as antTheme } from 'antd'
 import { AuthProvider, useAuth } from '@/lib/auth'
+import { ThemeProvider, useTheme } from '@/lib/theme'
 import { AppLayout } from '@/components/layout/AppLayout'
 import Login from '@/pages/Login'
 import Dashboard from '@/pages/Dashboard'
@@ -11,6 +12,23 @@ import Checki from '@/pages/Checki'
 import CheckiEdit from '@/pages/CheckiEdit'
 import Profile from '@/pages/Profile'
 import type { ReactNode } from 'react'
+
+function ThemedConfigProvider({ children }: { children: ReactNode }) {
+  const { resolvedTheme } = useTheme()
+  return (
+    <ConfigProvider
+      theme={{
+        algorithm: resolvedTheme === 'dark' ? antTheme.darkAlgorithm : antTheme.defaultAlgorithm,
+        token: {
+          colorPrimary: resolvedTheme === 'dark' ? '#00A08A' : '#006B5E',
+          borderRadius: 6,
+        },
+      }}
+    >
+      {children}
+    </ConfigProvider>
+  )
+}
 
 function ProtectedRoute({ children }: { children: ReactNode }) {
   const { user, loading } = useAuth()
@@ -36,18 +54,13 @@ const router = createBrowserRouter([
   {
     path: '/',
     element: (
-      <ConfigProvider
-        theme={{
-          token: {
-            colorPrimary: '#006B5E',
-            borderRadius: 6,
-          },
-        }}
-      >
-        <AuthProvider>
-          <Outlet />
-        </AuthProvider>
-      </ConfigProvider>
+      <ThemeProvider>
+        <ThemedConfigProvider>
+          <AuthProvider>
+            <Outlet />
+          </AuthProvider>
+        </ThemedConfigProvider>
+      </ThemeProvider>
     ),
     children: [
       {

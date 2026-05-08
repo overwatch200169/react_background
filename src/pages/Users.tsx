@@ -85,9 +85,9 @@ export default function Users() {
       <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16 }}>
         <div>
           <h1 style={{ fontSize: 24, fontWeight: 700 }}>用户管理</h1>
-          <p style={{ color: '#71717a' }}>管理系统用户账号</p>
+          <p style={{ color: 'var(--text-secondary)' }}>管理系统用户账号</p>
         </div>
-        <Button type="primary" icon={<UserAddOutlined />} onClick={() => setCreateOpen(true)} style={{ background: '#006B5E' }}>
+        <Button type="primary" icon={<UserAddOutlined />} onClick={() => setCreateOpen(true)}>
           创建用户
         </Button>
       </div>
@@ -112,7 +112,7 @@ export default function Users() {
         okText="创建"
         cancelText="取消"
         confirmLoading={creating}
-        okButtonProps={{ style: { background: '#006B5E' } }}
+        okButtonProps={{}}
       >
         <Form form={form} layout="vertical" initialValues={{ level: 1 }}>
           <Form.Item label="用户名" name="username" rules={[{ required: true, message: '请输入用户名' }]}>
@@ -139,19 +139,19 @@ export default function Users() {
         {profile ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12, fontSize: 14 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <span style={{ color: '#71717a' }}>用户 ID</span>
+              <span style={{ color: 'var(--text-secondary)' }}>用户 ID</span>
               <span style={{ fontFamily: 'monospace' }}>{profile.user_id}</span>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <span style={{ color: '#71717a' }}>生日</span>
+              <span style={{ color: 'var(--text-secondary)' }}>生日</span>
               <span>{profile.birthday ?? '-'}</span>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <span style={{ color: '#71717a' }}>年龄</span>
+              <span style={{ color: 'var(--text-secondary)' }}>年龄</span>
               <span>{profile.age ?? '-'}</span>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <span style={{ color: '#71717a' }}>简介</span>
+              <span style={{ color: 'var(--text-secondary)' }}>简介</span>
               <span style={{ maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{profile.bio ?? '-'}</span>
             </div>
             {profile.avatar_url && (
@@ -162,7 +162,7 @@ export default function Users() {
             )}
           </div>
         ) : (
-          <p style={{ textAlign: 'center', color: '#71717a', padding: 16 }}>暂无资料信息</p>
+          <p style={{ textAlign: 'center', color: 'var(--text-secondary)', padding: 16 }}>暂无资料信息</p>
         )}
       </Modal>
     </div>

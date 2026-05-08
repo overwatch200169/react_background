@@ -237,7 +237,7 @@ export default function Profile() {
             </Text>
           </div>
           <Space>
-            <Button type="primary" onClick={handleUpdateProfile} loading={profileSaving} style={{ background: '#006B5E' }}>
+            <Button type="primary" onClick={handleUpdateProfile} loading={profileSaving}>
               保存
             </Button>
           </Space>

@@ -95,7 +95,7 @@ export default function CheckiEdit() {
 
           <Space>
             <Button onClick={() => navigate('/checki')}>取消</Button>
-            <Button type="primary" onClick={handleSubmit} loading={saving} style={{ background: '#006B5E' }}>
+            <Button type="primary" onClick={handleSubmit} loading={saving}>
               {isNew ? '创建' : '保存'}
             </Button>
           </Space>
