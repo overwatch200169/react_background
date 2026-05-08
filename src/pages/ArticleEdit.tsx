@@ -21,22 +21,34 @@ export default function ArticleEdit() {
   const cherryInstance = useRef<Cherry | null>(null)
 
   useEffect(() => {
-    if (editorRef.current && !cherryInstance.current) {
-      cherryInstance.current = new Cherry({
-        el: editorRef.current,
-        value: form.body,
-        editor: {
-          defaultModel: 'edit&preview',
-          height: '400px',
-        },
-        locale: 'zh_CN',
-        callback: {
-          afterChange: (markdownText: string) => {
-            setForm((prev) => ({ ...prev, body: markdownText }))
-          },
-        },
-      })
+    if (!editorRef.current) return
+    if (cherryInstance.current) {
+      cherryInstance.current.setValue(form.body)
+      return
     }
+    cherryInstance.current = new Cherry({
+      el: editorRef.current,
+      value: form.body,
+      editor: {
+        defaultModel: 'edit&preview',
+        height: '400px',
+      },
+      locale: 'zh_CN',
+      fileUpload: (file: File, callback: (url: string) => void) => {
+        const formData = new FormData()
+        formData.append('file', file)
+        api.post<{ url: string }>('/api/v1/file/upload?folder=articles', formData, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+        })
+          .then((res) => callback(res.data.url))
+          .catch(() => message.error('文件上传失败'))
+      },
+      callback: {
+        afterChange: (markdownText: string) => {
+          setForm((prev) => ({ ...prev, body: markdownText }))
+        },
+      },
+    })
     return () => {
       if (cherryInstance.current) {
         cherryInstance.current.destroy()
@@ -44,7 +56,7 @@ export default function ArticleEdit() {
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [loading])
 
   useEffect(() => {
     if (!isNew) {

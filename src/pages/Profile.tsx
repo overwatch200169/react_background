@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react'
 import { useAuth } from '@/lib/auth'
 import api from '@/lib/api'
-import { Button, Input, Card, Typography, Spin, message, Space } from 'antd'
+import { Button, Input, Card, Typography, Spin, message, Space, Upload } from 'antd'
+import { UserOutlined } from '@ant-design/icons'
+import type { UploadProps } from 'antd'
 import type { UserProfilePublic, UserUpdate, UserProfileUpdate } from '@/types'
 
 const { Title, Text } = Typography
@@ -20,7 +22,7 @@ export default function Profile() {
   const [bio, setBio] = useState('')
   const [birthday, setBirthday] = useState('')
   const [age, setAge] = useState('')
-  const [avatarUrl, setAvatarUrl] = useState('')
+  const [avatarUploading, setAvatarUploading] = useState(false)
   const [profileSaving, setProfileSaving] = useState(false)
 
   useEffect(() => {
@@ -32,7 +34,6 @@ export default function Profile() {
         setBio(r.data.bio ?? '')
         setBirthday(r.data.birthday ? r.data.birthday.split('T')[0] : '')
         setAge(r.data.age != null ? String(r.data.age) : '')
-        setAvatarUrl(r.data.avatar_url ?? '')
       })
       .catch(() => {})
       .finally(() => setLoading(false))
@@ -56,6 +57,47 @@ export default function Profile() {
     }
   }
 
+  const handleUploadAvatar = async (file: File) => {
+    const isImage = file.type.startsWith('image/')
+    const isLt2M = file.size / 1024 / 1024 < 2
+    if (!isImage) {
+      message.error('只能上传图片文件')
+      return Upload.LIST_IGNORE
+    }
+    if (!isLt2M) {
+      message.error('图片大小不能超过 2MB')
+      return Upload.LIST_IGNORE
+    }
+    setAvatarUploading(true)
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+      const uploadRes = await api.post<{ url: string }>('/api/v1/file/upload?folder=avatars', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      })
+      const avatarUrl = uploadRes.data.url
+      const profileRes = await api.patch<UserProfilePublic>(`/api/v1/users/${userId}/profile`, {
+        avatar_url: avatarUrl,
+      })
+      setProfile(profileRes.data)
+      message.success('头像上传成功')
+    } catch {
+      message.error('头像上传失败')
+    } finally {
+      setAvatarUploading(false)
+    }
+    return false
+  }
+
+  const uploadProps: UploadProps = {
+    name: 'file',
+    accept: 'image/*',
+    showUploadList: false,
+    beforeUpload: handleUploadAvatar,
+  }
+
+
+
   const handleUpdateProfile = async () => {
     if (!userId) return
     setProfileSaving(true)
@@ -64,7 +106,6 @@ export default function Profile() {
         bio: bio || null,
         birthday: birthday || null,
         age: age ? Number(age) : null,
-        avatar_url: avatarUrl || null,
       }
       await api.patch(`/api/v1/users/${userId}/profile`, body)
       message.success('保存成功')
@@ -167,12 +208,31 @@ export default function Profile() {
             </div>
           </div>
           <div>
-            <Text strong style={{ display: 'block', marginBottom: 6 }}>头像链接</Text>
-            <Input
-              placeholder="输入头像图片 URL"
-              value={avatarUrl}
-              onChange={(e) => setAvatarUrl(e.target.value)}
-            />
+            <Text strong style={{ display: 'block', marginBottom: 6 }}>头像</Text>
+            <Upload {...uploadProps}>
+              <div style={{
+                width: 80, height: 80, borderRadius: '50%', overflow: 'hidden',
+                border: '1px dashed #d9d9d9', display: 'flex', alignItems: 'center',
+                justifyContent: 'center', cursor: avatarUploading ? 'wait' : 'pointer',
+                position: 'relative', background: '#fafafa', transition: 'border-color 0.3s',
+                opacity: avatarUploading ? 0.6 : 1,
+              }}>
+                {avatarUploading ? (
+                  <Spin size="small" />
+                ) : profile?.avatar_url ? (
+                  <img
+                    src={profile.avatar_url}
+                    alt="头像"
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                  />
+                ) : (
+                  <UserOutlined style={{ fontSize: 28, color: '#bfbfbf' }} />
+                )}
+              </div>
+            </Upload>
+            <Text type="secondary" style={{ display: 'block', marginTop: 4, fontSize: 12 }}>
+              点击上传头像（支持 JPG/PNG，不超过 2MB）
+            </Text>
           </div>
           <Space>
             <Button type="primary" onClick={handleUpdateProfile} loading={profileSaving} style={{ background: '#006B5E' }}>

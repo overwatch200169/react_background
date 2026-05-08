@@ -8,6 +8,7 @@ declare module 'cherry-markdown' {
         height?: string;
       };
       locale?: string;
+      fileUpload?: (file: File, callback: (url: string) => void) => void;
       callback?: {
         afterChange?: (text: string, html: string) => void;
         afterInit?: (text: string, html: string) => void;
