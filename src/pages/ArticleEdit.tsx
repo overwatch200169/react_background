@@ -278,7 +278,7 @@ export default function ArticleEdit() {
                     e.preventDefault()
                     setForm({ ...form, tags: form.tags.filter((t) => t !== tag) })
                   }}
-                  style={{ margin: 0, userSelect: 'none', background: '#006B5E', borderColor: '#006B5E', color: '#fff' }}
+                  style={{ margin: 0, userSelect: 'none', background: '#e2fbf7', borderColor: '#e2fbf7', color: '#002020' }}
                 >
                   {tag}
                 </Tag>
