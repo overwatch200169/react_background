@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import api from '@/lib/api'
+import { compressImage } from '@/lib/image-compress'
 import { Button, Input, Card, Typography, Space, message, Spin } from 'antd'
 import { ArrowLeftOutlined } from '@ant-design/icons'
 import type { ArticlePublic, ArticleCreate } from '@/types'
@@ -35,11 +36,14 @@ export default function ArticleEdit() {
       },
       locale: 'zh_CN',
       fileUpload: (file: File, callback: (url: string) => void) => {
-        const formData = new FormData()
-        formData.append('file', file)
-        api.post<{ url: string }>('/api/v1/file/upload?folder=articles', formData, {
-          headers: { 'Content-Type': 'multipart/form-data' },
-        })
+        compressImage(file)
+          .then((compressed) => {
+            const formData = new FormData()
+            formData.append('file', compressed)
+            return api.post<{ url: string }>('/api/v1/file/upload?folder=articles', formData, {
+              headers: { 'Content-Type': 'multipart/form-data' },
+            })
+          })
           .then((res) => callback(res.data.url))
           .catch(() => message.error('文件上传失败'))
       },

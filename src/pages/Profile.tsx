@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useAuth } from '@/lib/auth'
 import api from '@/lib/api'
+import { compressImage } from '@/lib/image-compress'
 import { Button, Input, Card, Typography, Spin, message, Space, Upload } from 'antd'
 import { UserOutlined } from '@ant-design/icons'
 import type { UploadProps } from 'antd'
@@ -70,8 +71,9 @@ export default function Profile() {
     }
     setAvatarUploading(true)
     try {
+      const compressed = await compressImage(file)
       const formData = new FormData()
-      formData.append('file', file)
+      formData.append('file', compressed)
       const uploadRes = await api.post<{ url: string }>('/api/v1/file/upload?folder=avatars', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       })

@@ -13,6 +13,7 @@
     "@ant-design/icons": "^6.2.2",
     "antd": "^6.3.7",
     "axios": "^1.16.0",
+    "browser-image-compression": "^2.0.2",
     "cherry-markdown": "^0.8.58",
     "clsx": "^2.1.1",
     "react": "^19.2.5",
