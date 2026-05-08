@@ -2,8 +2,8 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { useBlocker, useNavigate, useParams } from 'react-router-dom'
 import api from '@/lib/api'
 import { compressImage } from '@/lib/image-compress'
-import { Button, Input, Card, Typography, Space, message, Spin, Modal } from 'antd'
-import { ArrowLeftOutlined, ExclamationCircleOutlined,CheckCircleOutlined } from '@ant-design/icons'
+import { Button, Input, Card, Typography, Space, message, Spin, Modal, Tag } from 'antd'
+import { ArrowLeftOutlined, ExclamationCircleOutlined, CheckCircleOutlined } from '@ant-design/icons'
 import type { ArticlePublic, ArticleCreate } from '@/types'
 import Cherry from 'cherry-markdown'
 import 'cherry-markdown/dist/cherry-markdown.css'
@@ -36,7 +36,7 @@ export default function ArticleEdit() {
   const navigate = useNavigate()
   const isNew = !id
 
-  const [form, setForm] = useState<ArticleCreate>({ title: '', body: '', tags: '' })
+  const [form, setForm] = useState({ title: '', body: '', tags: [] as string[] })
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
   const [draftRestored, setDraftRestored] = useState(false)
@@ -45,6 +45,8 @@ export default function ArticleEdit() {
   const cherryInstance = useRef<Cherry | null>(null)
   const draftTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const draftCheckedRef = useRef(false)
+  const tagInputRef = useRef<HTMLInputElement>(null)
+  const [tagInput, setTagInput] = useState('')
 
   useEffect(() => {
     if (!editorRef.current) return
@@ -95,7 +97,7 @@ export default function ArticleEdit() {
           setForm({
             title: r.data.title ?? '',
             body: r.data.body ?? '',
-            tags: r.data.tags ?? '',
+            tags: r.data.tags ? r.data.tags.split(',').filter(Boolean) : [],
           })
         })
         .catch(() => message.error('文章加载失败'))
@@ -116,7 +118,7 @@ export default function ArticleEdit() {
                 const restored = {
                   title: draft.title ?? '',
                   body: draft.body ?? '',
-                  tags: draft.tags ?? '',
+                  tags: draft.tags ? draft.tags.split(',').filter(Boolean) : [],
                 }
                 setForm(restored)
                 setDraftRestored(true)
@@ -142,7 +144,7 @@ export default function ArticleEdit() {
             const restored = {
               title: draft.title ?? '',
               body: draft.body ?? '',
-              tags: draft.tags ?? '',
+              tags: draft.tags ? draft.tags.split(',').filter(Boolean) : [],
             }
             setForm(restored)
             setDraftRestored(true)
@@ -170,8 +172,8 @@ export default function ArticleEdit() {
   }, [id])
 
   useEffect(() => {
-    if (!loading && (form.title || form.body || form.tags)) {
-      scheduleDraftSave(form)
+    if (!loading && (form.title || form.body || form.tags.length)) {
+      scheduleDraftSave({ ...form, tags: form.tags.join(',') })
     }
     return () => {
       if (draftTimer.current) clearTimeout(draftTimer.current)
@@ -179,7 +181,7 @@ export default function ArticleEdit() {
   }, [form, loading, scheduleDraftSave])
 
   // 判断是否有未保存的内容
-  const hasUnsavedContent = !!(form.title || form.body || form.tags)
+  const hasUnsavedContent = !!(form.title || form.body || form.tags.length)
 
   // 拦截路由跳转（离开组件时确认）
   const blocker = useBlocker(hasUnsavedContent)
@@ -215,10 +217,11 @@ export default function ArticleEdit() {
     }
     setSaving(true)
     try {
+      const payload = { ...form, tags: form.tags.join(',') }
       if (isNew) {
-        await api.post('/api/v1/article/', form)
+        await api.post('/api/v1/article/', payload)
       } else {
-        await api.patch(`/api/v1/article/${id}`, form)
+        await api.patch(`/api/v1/article/${id}`, payload)
       }
       clearDraft(id)
       navigate('/articles')
@@ -264,11 +267,49 @@ export default function ArticleEdit() {
 
           <div>
             <Text strong style={{ display: 'block', marginBottom: 6 }}>标签</Text>
-            <Input
-              placeholder="多个标签用逗号分隔"
-              value={form.tags}
-              onChange={(e) => setForm({ ...form, tags: e.target.value })}
-            />
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, padding: '4px 8px', border: '1px solid #d9d9d9', borderRadius: 6, minHeight: 40, alignItems: 'center', transition: 'border-color 0.2s', cursor: 'text' }}
+              onClick={() => tagInputRef.current?.focus()}
+            >
+              {form.tags.map((tag) => (
+                <Tag
+                  key={tag}
+                  closable
+                  onClose={(e) => {
+                    e.preventDefault()
+                    setForm({ ...form, tags: form.tags.filter((t) => t !== tag) })
+                  }}
+                  style={{ margin: 0, userSelect: 'none', background: '#006B5E', borderColor: '#006B5E', color: '#fff' }}
+                >
+                  {tag}
+                </Tag>
+              ))}
+              <input
+                ref={tagInputRef}
+                placeholder={form.tags.length ? '' : '输入标签后按 Enter 添加'}
+                style={{ flex: 1, minWidth: 120, border: 'none', outline: 'none', padding: '4px 0', fontSize: 14, lineHeight: '20px', background: 'transparent' }}
+                value={tagInput}
+                onChange={(e) => setTagInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault()
+                    const val = tagInput.trim()
+                    if (!val) return
+                    if (form.tags.includes(val)) {
+                      message.warning('标签已存在')
+                      return
+                    }
+                    setForm({ ...form, tags: [...form.tags, val] })
+                    setTagInput('')
+                  }
+                  if (e.key === 'Backspace' && !tagInput && form.tags.length) {
+                    setForm({ ...form, tags: form.tags.slice(0, -1) })
+                  }
+                }}
+              />
+            </div>
+            <Text type="secondary" style={{ fontSize: 12, marginTop: 4, display: 'block' }}>
+              按 Enter 添加标签，Backspace 删除最后一个
+            </Text>
           </div>
 
           <div>

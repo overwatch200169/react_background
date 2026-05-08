@@ -59,7 +59,7 @@ export default function Articles() {
     {
       title: '标签', dataIndex: 'tags', responsive: ['md'] as any,
       render: (v: string | null) => v?.split(',').slice(0, 3).map((tag, i) => (
-        <Tag key={i}>{tag.trim()}</Tag>
+        <Tag key={i} style={{ background: '#006B5E', borderColor: '#006B5E', color: '#fff' }}>{tag.trim()}</Tag>
       )),
     },
     {
