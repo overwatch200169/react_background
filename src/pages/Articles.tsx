@@ -2,10 +2,15 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import api from '@/lib/api'
 import { useAuth } from '@/lib/auth'
-import { Button, Card, Table, Tag, Input, Space, Popconfirm, Tooltip, Spin, message } from 'antd'
-import { PlusOutlined, EditOutlined, DeleteOutlined, UndoOutlined, SearchOutlined, LeftOutlined, RightOutlined } from '@ant-design/icons'
+import { Button, Card, Table, Tag, Input, Space, Popconfirm, Tooltip, Spin, message, Pagination } from 'antd'
+import { PlusOutlined, EditOutlined, DeleteOutlined, UndoOutlined, SearchOutlined } from '@ant-design/icons'
 import type { ArticleList } from '@/types'
 import { formatUTCToLocal } from '@/lib/utils'
+
+interface ArticlePageResponse {
+  total: number
+  items: ArticleList[]
+}
 
 export default function Articles() {
   const { user } = useAuth()
@@ -13,23 +18,35 @@ export default function Articles() {
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [page, setPage] = useState(1)
-  const limit = 50
+  const [total, setTotal] = useState(0)
+  const pageSize = 10
   const navigate = useNavigate()
 
-  const fetchArticles = async (p: number = page) => {
+  const fetchArticles = async (p: number = page, s: string = search) => {
     setLoading(true)
     try {
-      const offset = (p - 1) * limit
-      const res = await api.get<ArticleList[]>('/api/v1/article/all', {
-        params: { offset, limit },
+      const offset = (p - 1) * pageSize
+      const isAdmin = user?.level === 0
+      const url = isAdmin
+        ? '/api/v1/article/all'
+        : `/api/v1/users/${user?.user_id}/article`
+      const res = await api.get<ArticlePageResponse>(url, {
+        params: { offset, limit: pageSize, search: s || undefined },
       })
-      setArticles(res.data)
+      setArticles(res.data.items)
+      setTotal(res.data.total)
     } catch { /* ignore */ } finally {
       setLoading(false)
     }
   }
 
-  useEffect(() => { fetchArticles() }, [page])
+  useEffect(() => { if (user) fetchArticles() }, [page, user])
+
+  const handleSearch = (val: string) => {
+    setSearch(val)
+    setPage(1)
+    fetchArticles(1, val)
+  }
 
   const handleDelete = async (id: number | null) => {
     if (!id) return
@@ -46,12 +63,6 @@ export default function Articles() {
       message.success('已恢复')
     } catch { /* ignore */ }
   }
-
-  const filtered = articles.filter(
-    (a) =>
-      a.title?.toLowerCase().includes(search.toLowerCase()) ||
-      a.tags?.toLowerCase().includes(search.toLowerCase())
-  )
 
   const columns = [
     { title: 'ID', dataIndex: 'article_id', width: 70, render: (v: number | null) => <span style={{ fontFamily: 'monospace' }}>{v}</span> },
@@ -132,7 +143,7 @@ export default function Articles() {
             placeholder="搜索标题或标签..."
             prefix={<SearchOutlined />}
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => handleSearch(e.target.value)}
             style={{ width: 240 }}
             allowClear
           />
@@ -140,37 +151,26 @@ export default function Articles() {
       >
         <Spin spinning={loading}>
           <Table
-            dataSource={filtered}
+            dataSource={articles}
             columns={columns}
             rowKey="article_id"
             pagination={false}
             locale={{ emptyText: '暂无文章' }}
             scroll={{ x: 700 }}
           />
+          <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 16 }}>
+            <Pagination
+              current={page}
+              pageSize={pageSize}
+              total={total}
+              showSizeChanger={false}
+              showTotal={(t) => `共 ${t} 条`}
+              onChange={(p) => setPage(p)}
+            />
+          </div>
         </Spin>
       </Card>
 
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <span style={{ color: '#71717a', fontSize: 14 }}>
-          第 {(page - 1) * limit + 1} - {page * limit} 条
-        </span>
-        <Space>
-          <Button
-            icon={<LeftOutlined />}
-            disabled={page <= 1}
-            onClick={() => setPage((p) => Math.max(1, p - 1))}
-          >
-            上一页
-          </Button>
-          <span style={{ fontSize: 14, fontWeight: 500, padding: '0 8px' }}>第 {page} 页</span>
-          <Button
-            disabled={articles.length < limit}
-            onClick={() => setPage((p) => p + 1)}
-          >
-            下一页 <RightOutlined />
-          </Button>
-        </Space>
-      </div>
     </div>
   )
 }
