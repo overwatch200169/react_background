@@ -3,30 +3,32 @@ import { useBlocker, useNavigate, useParams } from 'react-router-dom'
 import api from '@/lib/api'
 import { compressImage } from '@/lib/image-compress'
 import { Button, Input, Card, Typography, Space, message, Spin, Modal } from 'antd'
-import { ArrowLeftOutlined, ExclamationCircleOutlined } from '@ant-design/icons'
+import { ArrowLeftOutlined, ExclamationCircleOutlined,CheckCircleOutlined } from '@ant-design/icons'
 import type { ArticlePublic, ArticleCreate } from '@/types'
 import Cherry from 'cherry-markdown'
 import 'cherry-markdown/dist/cherry-markdown.css'
 
 const { Title, Text } = Typography
 
-const DRAFT_KEY = 'article-draft'
+function getDraftKey(articleId?: string) {
+  return articleId ? `article-draft-${articleId}` : 'article-draft-new'
+}
 
-function loadDraft(): Partial<ArticleCreate> | null {
+function loadDraft(articleId?: string): Partial<ArticleCreate> | null {
   try {
-    const raw = localStorage.getItem(DRAFT_KEY)
+    const raw = localStorage.getItem(getDraftKey(articleId))
     return raw ? JSON.parse(raw) : null
   } catch {
     return null
   }
 }
 
-function saveDraft(data: ArticleCreate) {
-  localStorage.setItem(DRAFT_KEY, JSON.stringify(data))
+function saveDraft(data: ArticleCreate, articleId?: string) {
+  localStorage.setItem(getDraftKey(articleId), JSON.stringify(data))
 }
 
-function clearDraft() {
-  localStorage.removeItem(DRAFT_KEY)
+function clearDraft(articleId?: string) {
+  localStorage.removeItem(getDraftKey(articleId))
 }
 
 export default function ArticleEdit() {
@@ -38,6 +40,7 @@ export default function ArticleEdit() {
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
   const [draftRestored, setDraftRestored] = useState(false)
+  const [draftStatus, setDraftStatus] = useState<'idle' | 'saving' | 'saved'>('idle')
   const editorRef = useRef<HTMLDivElement>(null)
   const cherryInstance = useRef<Cherry | null>(null)
   const draftTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -96,10 +99,38 @@ export default function ArticleEdit() {
           })
         })
         .catch(() => message.error('文章加载失败'))
-        .finally(() => setLoading(false))
+        .finally(() => {
+          setLoading(false)
+          if (draftCheckedRef.current) return
+          draftCheckedRef.current = true
+          // 文章加载完后检查本地草稿
+          const draft = loadDraft(id)
+          if (draft && (draft.title || draft.body || draft.tags)) {
+            Modal.confirm({
+              title: '恢复本地草稿',
+              icon: <ExclamationCircleOutlined />,
+              content: '检测到上次编辑时保存的草稿，是否用草稿覆盖当前内容？',
+              okText: '应用草稿',
+              cancelText: '保持原文',
+              onOk: () => {
+                const restored = {
+                  title: draft.title ?? '',
+                  body: draft.body ?? '',
+                  tags: draft.tags ?? '',
+                }
+                setForm(restored)
+                setDraftRestored(true)
+                if (cherryInstance.current) {
+                  cherryInstance.current.setValue(restored.body)
+                }
+              },
+              onCancel: () => clearDraft(id),
+            })
+          }
+        })
     } else if (!draftCheckedRef.current) {
       draftCheckedRef.current = true
-      const draft = loadDraft()
+      const draft = loadDraft(id)
       if (draft && (draft.title || draft.body || draft.tags)) {
         Modal.confirm({
           title: '恢复本地草稿',
@@ -119,7 +150,7 @@ export default function ArticleEdit() {
               cherryInstance.current.setValue(restored.body)
             }
           },
-          onCancel: () => clearDraft(),
+          onCancel: () => clearDraft(id),
         })
       }
     }
@@ -128,8 +159,15 @@ export default function ArticleEdit() {
   // 自动保存草稿（防抖 2 秒）
   const scheduleDraftSave = useCallback((data: ArticleCreate) => {
     if (draftTimer.current) clearTimeout(draftTimer.current)
-    draftTimer.current = setTimeout(() => saveDraft(data), 2000)
-  }, [])
+    draftTimer.current = setTimeout(() => {
+      setDraftStatus('saving')
+      setTimeout(() => {
+        saveDraft(data, id)
+        setDraftStatus('saved')
+        setTimeout(() => setDraftStatus('idle'), 1500)
+      }, 300)
+    }, 2000)
+  }, [id])
 
   useEffect(() => {
     if (!loading && (form.title || form.body || form.tags)) {
@@ -182,7 +220,7 @@ export default function ArticleEdit() {
       } else {
         await api.patch(`/api/v1/article/${id}`, form)
       }
-      clearDraft()
+      clearDraft(id)
       navigate('/articles')
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : '保存失败'
@@ -234,7 +272,20 @@ export default function ArticleEdit() {
           </div>
 
           <div>
-            <Text strong style={{ display: 'block', marginBottom: 6 }}>正文内容（Markdown）</Text>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+              <Text strong>正文内容（Markdown）</Text>
+              {draftStatus === 'saving' && (
+                <Text type="secondary" style={{ fontSize: 12 }}>
+                  <Spin size="small" style={{ marginRight: 4 }} />
+                  正在保存草稿...
+                </Text>
+              )}
+              {draftStatus === 'saved' && (
+                <Text type="success" style={{ fontSize: 12 }}>
+                  <CheckCircleOutlined />
+                  草稿保存成功</Text>
+              )}
+            </div>
             <div ref={editorRef} />
           </div>
 
