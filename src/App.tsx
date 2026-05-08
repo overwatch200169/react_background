@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { Outlet, Navigate, createBrowserRouter, RouterProvider } from 'react-router-dom'
 import { Spin, ConfigProvider } from 'antd'
 import { AuthProvider, useAuth } from '@/lib/auth'
 import { AppLayout } from '@/components/layout/AppLayout'
@@ -32,43 +32,10 @@ function PublicRoute({ children }: { children: ReactNode }) {
   return <>{children}</>
 }
 
-function AppRoutes() {
-  return (
-    <Routes>
-      <Route
-        path="/login"
-        element={
-          <PublicRoute>
-            <Login />
-          </PublicRoute>
-        }
-      />
-      <Route
-        path="/"
-        element={
-          <ProtectedRoute>
-            <AppLayout />
-          </ProtectedRoute>
-        }
-      >
-        <Route index element={<Dashboard />} />
-        <Route path="users" element={<Users />} />
-        <Route path="articles" element={<Articles />} />
-        <Route path="articles/new" element={<ArticleEdit />} />
-        <Route path="articles/:id" element={<ArticleEdit />} />
-        <Route path="checki" element={<Checki />} />
-        <Route path="checki/new" element={<CheckiEdit />} />
-        <Route path="checki/:id" element={<CheckiEdit />} />
-        <Route path="profile" element={<Profile />} />
-      </Route>
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
-  )
-}
-
-export default function App() {
-  return (
-    <BrowserRouter>
+const router = createBrowserRouter([
+  {
+    path: '/',
+    element: (
       <ConfigProvider
         theme={{
           token: {
@@ -78,9 +45,42 @@ export default function App() {
         }}
       >
         <AuthProvider>
-          <AppRoutes />
+          <Outlet />
         </AuthProvider>
       </ConfigProvider>
-    </BrowserRouter>
-  )
+    ),
+    children: [
+      {
+        path: 'login',
+        element: (
+          <PublicRoute>
+            <Login />
+          </PublicRoute>
+        ),
+      },
+      {
+        element: (
+          <ProtectedRoute>
+            <AppLayout />
+          </ProtectedRoute>
+        ),
+        children: [
+          { index: true, element: <Dashboard /> },
+          { path: 'users', element: <Users /> },
+          { path: 'articles', element: <Articles /> },
+          { path: 'articles/new', element: <ArticleEdit /> },
+          { path: 'articles/:id', element: <ArticleEdit /> },
+          { path: 'checki', element: <Checki /> },
+          { path: 'checki/new', element: <CheckiEdit /> },
+          { path: 'checki/:id', element: <CheckiEdit /> },
+          { path: 'profile', element: <Profile /> },
+        ],
+      },
+      { path: '*', element: <Navigate to="/" replace /> },
+    ],
+  },
+])
+
+export default function App() {
+  return <RouterProvider router={router} />
 }
