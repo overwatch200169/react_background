@@ -1,10 +1,11 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import api from '@/lib/api'
 import { Button, Input, Card, Typography, Space, message, Spin } from 'antd'
 import { ArrowLeftOutlined } from '@ant-design/icons'
 import type { ArticlePublic, ArticleCreate } from '@/types'
-import MDEditor from '@uiw/react-md-editor'
+import Cherry from 'cherry-markdown'
+import 'cherry-markdown/dist/cherry-markdown.css'
 
 const { Title, Text } = Typography
 
@@ -16,6 +17,34 @@ export default function ArticleEdit() {
   const [form, setForm] = useState<ArticleCreate>({ title: '', body: '', tags: '' })
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
+  const editorRef = useRef<HTMLDivElement>(null)
+  const cherryInstance = useRef<Cherry | null>(null)
+
+  useEffect(() => {
+    if (editorRef.current && !cherryInstance.current) {
+      cherryInstance.current = new Cherry({
+        el: editorRef.current,
+        value: form.body,
+        editor: {
+          defaultModel: 'edit&preview',
+          height: '400px',
+        },
+        locale: 'zh_CN',
+        callback: {
+          afterChange: (markdownText: string) => {
+            setForm((prev) => ({ ...prev, body: markdownText }))
+          },
+        },
+      })
+    }
+    return () => {
+      if (cherryInstance.current) {
+        cherryInstance.current.destroy()
+        cherryInstance.current = null
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   useEffect(() => {
     if (!isNew) {
@@ -84,20 +113,15 @@ export default function ArticleEdit() {
           <div>
             <Text strong style={{ display: 'block', marginBottom: 6 }}>标签</Text>
             <Input
-              placeholder="多个标签用逗号分隔，如: 技术,前端,React"
+              placeholder="多个标签用逗号分隔"
               value={form.tags}
               onChange={(e) => setForm({ ...form, tags: e.target.value })}
             />
           </div>
 
-          <div data-color-mode="light">
+          <div>
             <Text strong style={{ display: 'block', marginBottom: 6 }}>正文内容（Markdown）</Text>
-            <MDEditor
-              value={form.body}
-              onChange={(val) => setForm({ ...form, body: val ?? '' })}
-              height={400}
-              preview="live"
-            />
+            <div ref={editorRef} />
           </div>
 
           <Space>
