@@ -100,6 +100,7 @@ export default function Users() {
             rowKey="user_id"
             pagination={false}
             locale={{ emptyText: '暂无用户数据' }}
+            scroll={{ x: 700 }}
           />
         </Spin>
       </Card>

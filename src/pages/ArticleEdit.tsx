@@ -3,7 +3,7 @@ import { useBlocker, useNavigate, useParams } from 'react-router-dom'
 import api from '@/lib/api'
 import { compressImage } from '@/lib/image-compress'
 import { useTheme } from '@/lib/theme'
-import { Button, Input, Card, Typography, Space, message, Spin, Modal, Tag } from 'antd'
+import { Button, Input, Card, Typography, Space, message, Spin,Modal,Tag,Drawer } from 'antd'
 import { ArrowLeftOutlined, ExclamationCircleOutlined, CheckCircleOutlined } from '@ant-design/icons'
 import type { ArticlePublic, ArticleCreate } from '@/types'
 import Cherry from 'cherry-markdown'
@@ -32,6 +32,74 @@ function clearDraft(articleId?: string) {
   localStorage.removeItem(getDraftKey(articleId))
 }
 
+interface MobileTagProps {
+  tags: string[];
+  onChange: (newTags: string[]) => void;
+  open: boolean;
+  onClose: () => void;
+}
+
+  const MobileTagDrawer = ({ tags, onChange, open, onClose }: MobileTagProps) => {
+  const [inputValue, setInputValue] = useState('');
+
+  const handleAdd = () => {
+    const val = inputValue.trim();
+    if (!val) return;
+    if (tags.includes(val)) {
+      message.warning('标签已存在');
+      return;
+    }
+    onChange([...tags, val]);
+    setInputValue('');
+  };
+
+  return (
+    <Drawer
+      title="管理标签"
+      placement="bottom"
+      onClose={onClose}
+      open={open}
+      height="60%" // 设置高度为屏幕的 60%
+      styles={{
+        body: { padding: '16px' }
+      }}
+      footer={
+        <div style={{ textAlign: 'right' }}>
+          <Button onClick={onClose} type="primary" style={{ background: '#006B5E' }}>完成</Button>
+        </div>
+      }
+    >
+      <div style={{ display: 'flex', gap: '8px', marginBottom: '20px' }}>
+        <Input
+          placeholder="输入新标签"
+          value={inputValue}
+          onChange={(e) => setInputValue(e.target.value)}
+          onPressEnter={handleAdd}
+          autoFocus={open} // 弹出时自动聚焦
+        />
+        <Button onClick={handleAdd} type="primary" style={{ background: '#006B5E' }}>添加</Button>
+      </div>
+      
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+        {tags.map(tag => (
+          <Tag 
+            key={tag} 
+            closable 
+            onClose={() => onChange(tags.filter(t => t !== tag))}
+            style={{ 
+              padding: '6px 12px', 
+              fontSize: '14px', 
+              borderRadius: '15px',
+              margin: 0 
+            }}
+          >
+            {tag}
+          </Tag>
+        ))}
+      </div>
+    </Drawer>
+  );
+};
 export default function ArticleEdit() {
   const { id } = useParams()
   const navigate = useNavigate()
@@ -49,6 +117,8 @@ export default function ArticleEdit() {
   const draftCheckedRef = useRef(false)
   const tagInputRef = useRef<HTMLInputElement>(null)
   const [tagInput, setTagInput] = useState('')
+  const [isTagDrawerOpen, setIsTagDrawerOpen] = useState(false);
+  const isMobile = window.innerWidth < 768; // 这里的判断逻辑你可以复用组件内现有的
 
   useEffect(() => {
     if (!editorRef.current) return
@@ -62,7 +132,8 @@ export default function ArticleEdit() {
       value: form.body,
       editor: {
         defaultModel: isMobile ? 'editOnly' : 'edit&preview',
-        height: '400px',
+        height: isMobile ? 'calc(100dvh - 250px)' : '500px', 
+    minHeight: isMobile ? '300px' : '500px',
       },
       themeSettings: {
         themeList: [
@@ -326,51 +397,80 @@ export default function ArticleEdit() {
           </div>
 
           <div>
-            <Text strong style={{ display: 'block', marginBottom: 6 }}>标签</Text>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, padding: '4px 8px', border: '1px solid #d9d9d9', borderRadius: 6, minHeight: 40, alignItems: 'center', transition: 'border-color 0.2s', cursor: 'text' }}
-              onClick={() => tagInputRef.current?.focus()}
-            >
-              {form.tags.map((tag) => (
-                <Tag
-                  key={tag}
-                  closable
-                  onClose={(e) => {
-                    e.preventDefault()
-                    setForm({ ...form, tags: form.tags.filter((t) => t !== tag) })
-                  }}
-                  style={{ margin: 0, userSelect: 'none', background: 'var(--tag-bg)', borderColor: 'var(--tag-border)', color: 'var(--tag-color)' }}
-                >
-                  {tag}
-                </Tag>
-              ))}
-              <input
-                ref={tagInputRef}
-                placeholder={form.tags.length ? '' : '输入标签后按 Enter 添加'}
-                style={{ flex: 1, minWidth: 120, border: 'none', outline: 'none', padding: '4px 0', fontSize: 14, lineHeight: '20px', background: 'transparent' }}
-                value={tagInput}
-                onChange={(e) => setTagInput(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault()
-                    const val = tagInput.trim()
-                    if (!val) return
-                    if (form.tags.includes(val)) {
-                      message.warning('标签已存在')
-                      return
-                    }
-                    setForm({ ...form, tags: [...form.tags, val] })
-                    setTagInput('')
-                  }
-                  if (e.key === 'Backspace' && !tagInput && form.tags.length) {
-                    setForm({ ...form, tags: form.tags.slice(0, -1) })
-                  }
-                }}
-              />
-            </div>
-            <Text type="secondary" style={{ fontSize: 12, marginTop: 4, display: 'block' }}>
-              按 Enter 添加标签，Backspace 删除最后一个
-            </Text>
-          </div>
+  <Text strong style={{ display: 'block', marginBottom: 6 }}>标签</Text>
+  <div 
+    style={{ 
+      display: 'flex', 
+      flexWrap: 'wrap', 
+      gap: 6, 
+      padding: '8px 12px', 
+      border: '1px solid #d9d9d9', 
+      borderRadius: 6, 
+      minHeight: 40, 
+      alignItems: 'center', 
+      cursor: 'text',
+      backgroundColor: 'transparent' // 移动端加个浅色背景提示可点击
+    }}
+    onClick={() => {
+      if (isMobile) {
+        setIsTagDrawerOpen(true); // 移动端点击打开抽屉
+      } else {
+        tagInputRef.current?.focus();
+      }
+    }}
+  >
+    {form.tags.map((tag) => (
+      <Tag
+        key={tag}
+        closable
+        onClose={(e) => {
+          e.preventDefault();
+          e.stopPropagation(); // 关键：防止点击删除图标时弹出抽屉
+          setForm({ ...form, tags: form.tags.filter((t) => t !== tag) });
+        }}
+        style={{ margin: 0, userSelect: 'none', background: 'var(--tag-bg)', borderColor: 'var(--tag-border)', color: 'var(--tag-color)' }}
+      >
+        {tag}
+      </Tag>
+    ))}
+    
+    {!isMobile ? (
+      <input
+        ref={tagInputRef}
+        placeholder={form.tags.length ? '' : '输入标签后按 Enter 添加'}
+        style={{ flex: 1, minWidth: 120, border: 'none', outline: 'none', background: 'transparent' }}
+        value={tagInput}
+        onChange={(e) => setTagInput(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            const val = tagInput.trim();
+            if (!val) return;
+            if (form.tags.includes(val)) {
+              message.warning('标签已存在');
+              return;
+            }
+            setForm({ ...form, tags: [...form.tags, val] });
+            setTagInput('');
+          }
+          if (e.key === 'Backspace' && !tagInput && form.tags.length) {
+            setForm({ ...form, tags: form.tags.slice(0, -1) });
+          }
+        }}
+      />
+    ) : (
+      form.tags.length === 0 && <Text type="secondary">点击添加标签...</Text>
+    )}
+  </div>
+</div>
+
+{/* 将抽屉组件放在返回结果的末尾 */}
+<MobileTagDrawer
+  open={isTagDrawerOpen}
+  tags={form.tags}
+  onClose={() => setIsTagDrawerOpen(false)}
+  onChange={(newTags) => setForm({ ...form, tags: newTags })}
+/>
 
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
@@ -390,7 +490,7 @@ export default function ArticleEdit() {
             <div ref={editorRef} />
           </div>
 
-          <Space>
+          <Space style={{ marginTop: '16px' }}>
             <Button onClick={() => navigate(-1)}>取消</Button>
             <Button type="primary" onClick={handleSubmit} loading={saving} style={{ background: '#006B5E' }}>
               {isNew ? '发布' : '保存'}
