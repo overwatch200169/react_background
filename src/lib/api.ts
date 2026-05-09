@@ -20,7 +20,7 @@ function getAccessToken(): string | null {
 // Backend sets csrf_token cookie on this endpoint
 export async function fetchCsrfToken(): Promise<string | null> {
   try {
-    const res = await axios.get('/', {
+    const res = await axios.get('/auth/csrf', {
       withCredentials: true,
       headers: { Accept: 'application/json' },
     })
