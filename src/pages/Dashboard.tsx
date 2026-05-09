@@ -9,10 +9,14 @@ export default function Dashboard() {
   const { user } = useAuth()
   const [userCount, setUserCount] = useState(0)
   const [articleCount, setArticleCount] = useState(0)
+  interface ArticlePageResponse {
+  total: number
+  items: ArticleList[]
+}
 
   useEffect(() => {
     api.get<UserPublic[]>('/api/v1/users').then((r) => setUserCount(r.data.length)).catch(() => {})
-    api.get<ArticleList[]>('/api/v1/article/all').then((r) => setArticleCount(r.data.length)).catch(() => {})
+    api.get<ArticlePageResponse>('/api/v1/article/all').then((r) => setArticleCount(r.data.total)).catch(() => {})
   }, [])
 
   return (
