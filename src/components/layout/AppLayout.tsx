@@ -32,10 +32,10 @@ export function AppLayout() {
     <div className="flex h-screen bg-background">
       <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column' ,overflowX: 'hidden'}}>
         <header style={{
           display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16,
-          height: 64, borderBottom: '1px solid var(--color-border)', padding: '0 16px',
+          height: 64, borderBottom: '1px solid var(--color-border)', padding: '0 16px',flexShrink: 0, position: 'sticky', top: 0,background: 'var(--color-background)',zIndex: 100,backdropFilter: 'blur(10px)',
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
             <Button
@@ -61,7 +61,10 @@ export function AppLayout() {
           )}
         </header>
 
-        <main style={{ flex: 1, overflowY: 'auto', padding: '16px 24px' }}>
+        <main style={{ flex: '1 0 auto', 
+    width: '100%', 
+     
+    overflowY: 'auto', padding: '16px 24px' }}>
           <Outlet />
         </main>
       </div>

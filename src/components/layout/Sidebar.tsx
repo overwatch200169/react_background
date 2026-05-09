@@ -44,6 +44,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
           'fixed inset-y-0 left-0 z-50 flex w-64 flex-col border-r border-sidebar-border bg-sidebar transition-transform duration-200 lg:static lg:translate-x-0',
           open ? 'translate-x-0' : '-translate-x-full'
         )}
+      style={{zIndex: 101,}}
       >
         <div className="flex h-16 items-center justify-between border-b px-4">
           <div className="flex items-center gap-2">
