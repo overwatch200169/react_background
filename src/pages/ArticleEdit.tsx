@@ -119,6 +119,7 @@ export default function ArticleEdit() {
   const [tagInput, setTagInput] = useState('')
   const [isTagDrawerOpen, setIsTagDrawerOpen] = useState(false);
   const isMobile = window.innerWidth < 768; // 这里的判断逻辑你可以复用组件内现有的
+  const [isSubmitting, setIsSubmitting] = useState(false); // 新增：标识是否正在提交
 
   useEffect(() => {
     if (!editorRef.current) return
@@ -312,7 +313,7 @@ export default function ArticleEdit() {
   }, [form, loading, scheduleDraftSave])
 
   // 判断是否有未保存的内容
-  const hasUnsavedContent = !!(form.title || form.body || form.tags.length)
+  const hasUnsavedContent = !isSubmitting&&!!(form.title || form.body || form.tags.length)
 
   // 拦截路由跳转（离开组件时确认）
   const blocker = useBlocker(hasUnsavedContent)
@@ -346,6 +347,7 @@ export default function ArticleEdit() {
       message.warning('请填写标题和内容')
       return
     }
+    setIsSubmitting(true);
     setSaving(true)
     try {
       const payload = { ...form, tags: form.tags.join(',') }
@@ -357,6 +359,7 @@ export default function ArticleEdit() {
       clearDraft(id)
       navigate('/articles')
     } catch (err: unknown) {
+      setIsSubmitting(false);
       const msg = err instanceof Error ? err.message : '保存失败'
       message.error(msg)
     } finally {

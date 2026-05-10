@@ -2,7 +2,6 @@ import axios from 'axios'
 
 const API_BASE = ''
 
-let csrfToken: string | null = null
 
 const api = axios.create({
   baseURL: API_BASE,
@@ -18,40 +17,12 @@ function getAccessToken(): string | null {
 
 // Fetch CSRF token from backend GET /
 // Backend sets csrf_token cookie on this endpoint
-export async function fetchCsrfToken(): Promise<string | null> {
-  try {
-    const res = await axios.get('/api/v1/auth/csrf', {
-      withCredentials: true,
-      headers: { Accept: 'application/json' },
-    })
-    // 1. Try response body
-    if (res.data?.csrf_token) {
-      csrfToken = res.data.csrf_token
-      return csrfToken
-    }
-    // 2. Try Set-Cookie header (only available in non-cross-origin or same-site)
-    const setCookie = res.headers['set-cookie'] as string[] | undefined
-    if (setCookie) {
-      const match = setCookie.find((c: string) => c.startsWith('csrf_token='))
-      if (match) {
-        csrfToken = match.split('=')[1]?.split(';')[0] ?? null
-        return csrfToken
-      }
-    }
-    // 3. Try document.cookie (won't work for HttpOnly cookies)
-    const cookieMatch = document.cookie.match(/csrf_token=([^;]+)/)
-    if (cookieMatch) {
-      csrfToken = cookieMatch[1]
-      return csrfToken
-    }
-    return null
-  } catch {
-    return null
-  }
+function getCookie(name: string): string | null {
+  const value = `; ${document.cookie}`;
+  const parts = value.split(`; ${name}=`);
+  if (parts.length === 2) return parts.pop()?.split(';').shift() || null;
+  return null;
 }
-
-// Initialize CSRF token on load
-fetchCsrfToken()
 
 // Request interceptor — attach auth token & CSRF header
 api.interceptors.request.use(async (config) => {
@@ -62,7 +33,7 @@ api.interceptors.request.use(async (config) => {
 
   // Always fetch fresh CSRF token for POST/PUT/PATCH/DELETE
   if (['post', 'put', 'patch', 'delete'].includes(config.method ?? '')) {
-    const token = await fetchCsrfToken()
+    const token = getCookie('csrf_token')
     if (token) {
       config.headers['X-CSRF-Token'] = token
     }
