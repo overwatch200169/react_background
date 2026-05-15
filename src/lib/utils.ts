@@ -13,13 +13,12 @@ export function cn(...inputs: ClassValue[]) {
  */
 export function formatUTCToLocal(
   utcString: string | null | undefined,
-  timeZone?: string,
 ): string {
   if (!utcString) return '-'
 
   const date = new Date(utcString)
   if (isNaN(date.getTime())) return utcString;
-  const pad = (num) => String(num).padStart(2, '0');
+  const pad = (num: number): string=> num.toString().padStart(2, '0');
    const year = date.getFullYear();
   const month = pad(date.getMonth() + 1);
   const day = pad(date.getDate());
