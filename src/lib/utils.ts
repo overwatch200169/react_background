@@ -18,20 +18,15 @@ export function formatUTCToLocal(
   if (!utcString) return '-'
 
   const date = new Date(utcString)
-  if (isNaN(date.getTime())) return '-'
+  if (isNaN(date.getTime())) return utcString;
+  const pad = (num) => String(num).padStart(2, '0');
+   const year = date.getFullYear();
+  const month = pad(date.getMonth() + 1);
+  const day = pad(date.getDate());
+  const hour = pad(date.getHours());
+  const minute = pad(date.getMinutes());
 
-  const options: Intl.DateTimeFormatOptions = {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-    hour12: false,
-    timeZone,
-  }
-
-  return new Intl.DateTimeFormat('zh-CN', options).format(date)
+  return `${year}-${month}-${day}`;
 }
 
 /**
