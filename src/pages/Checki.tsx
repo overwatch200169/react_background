@@ -1,26 +1,35 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import api from '@/lib/api'
-import { Button, Card, Table, Tag, Space, Popconfirm, Spin } from 'antd'
+import { Button, Card, Table, Tag, Space, Popconfirm, Spin,Pagination } from 'antd'
 import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons'
 import type { CheckiCount } from '@/types'
-
+interface CheckiPageResponse {
+  total: number
+  items: CheckiCount[]
+}
 export default function Checki() {
   const navigate = useNavigate()
   const [items, setItems] = useState<CheckiCount[]>([])
   const [loading, setLoading] = useState(true)
+  const [page, setPage] = useState(1)
+  const [total, setTotal] = useState(0)
+  const pageSize = 15
 
-  const fetchItems = async () => {
+  const fetchItems = async (p:number=page) => {
     setLoading(true)
     try {
-      const res = await api.get<CheckiCount[]>('/api/v1/egg/checki')
-      setItems(res.data)
+      const offset = (p - 1) * pageSize
+      const limit = pageSize
+      const res = await api.get<CheckiPageResponse>('/api/v1/egg/checki_pagination',{params: { offset, limit}})
+      setTotal(res.data.total)
+      setItems(res.data.items)
     } catch { /* ignore */ } finally {
       setLoading(false)
     }
   }
 
-  useEffect(() => { fetchItems() }, [])
+  useEffect(() => { fetchItems() }, [page])
 
   const handleDelete = async (id: number | null) => {
     if (!id) return
@@ -76,6 +85,16 @@ export default function Checki() {
             pagination={false}
             locale={{ emptyText: '暂无项目' }}
           />
+           <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 16 }}>
+            <Pagination
+              current={page}
+              pageSize={pageSize}
+              total={total}
+              showSizeChanger={false}
+              showTotal={(t) => `共 ${t} 条`}
+              onChange={(p) => setPage(p)}
+            />
+          </div>
         </Spin>
       </Card>
     </div>

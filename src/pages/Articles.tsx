@@ -19,7 +19,7 @@ export default function Articles() {
   const [search, setSearch] = useState('')
   const [page, setPage] = useState(1)
   const [total, setTotal] = useState(0)
-  const pageSize = 10
+  const pageSize = 15
   const navigate = useNavigate()
 
   const fetchArticles = async (p: number = page, s: string = search) => {
