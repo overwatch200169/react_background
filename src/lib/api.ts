@@ -50,7 +50,7 @@ api.interceptors.response.use(
     const { config, response } = error;
     
     // 如果返回 401 且不是刷新接口本身的 401
-    if (response?.status === 401 && !config._retry && config.url !== '/api/refresh') {
+    if (response?.status === 401 && !config._retry && config.url !== '/api/v1/auth/refresh_token') {
       if (isRefreshing) {
         // 如果正在刷新中，把当前的请求暂存到队列里
         return new Promise((resolve) => {
@@ -67,7 +67,8 @@ api.interceptors.response.use(
       try {
         // 🟢 关键点：这里不需要手动传 refresh_token
         // 浏览器会自动携带 HttpOnly Cookie
-        const res = await axios.post('/api/v1/auth/refresh_token', {}, { withCredentials: true });
+        const currentCsrfToken = getCookie('csrf_token');
+        const res = await axios.post('/api/v1/auth/refresh_token', {}, { withCredentials: true ,headers:{'X-CSRF-Token':currentCsrfToken}});
         const { access_token } = res.data;
 
         localStorage.setItem('access_token', access_token);

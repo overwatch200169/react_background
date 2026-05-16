@@ -38,7 +38,7 @@ export default function Login() {
       await login(values.username, values.password)
       navigate('/')
     } catch (err: unknown) {
-      if (axios.isAxiosError(err) && err.response?.status === 401) {
+      if (axios.isAxiosError(err) && err.response?.status === 400) {
         message.error('用户名或密码错误')
       } else {
         message.error('登录失败，请检查网络连接')
